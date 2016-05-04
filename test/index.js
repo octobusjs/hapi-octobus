@@ -4,14 +4,25 @@ import { expect } from 'chai';
 import * as HapiOctobus from '../src';
 
 describe('register()', () => {
-  it('exposes an eventDispatcher instance', () => {
-    const server = new Server();
+  let server;
+
+  beforeEach((done) => {
+    server = new Server();
     server.connection();
     server.register({
       register: HapiOctobus.register,
-    }, (err) => {
-      expect(err).to.not.exist();
-      expect(server.eventDispatcher).to.exist();
+    }, done);
+  });
+
+  it('exposes an eventDispatcher instance', () => {
+    const { eventDispatcher } = server.plugins['hapi-octobus'];
+    expect(eventDispatcher).to.exist();
+    expect(server.eventDispatcher).to.exist();
+    expect(server.eventDispatcher).to.equal(eventDispatcher);
+
+    eventDispatcher.subscribe('test', () => 'it works!');
+    return eventDispatcher.dispatch('test').then((result) => {
+      expect(result).to.equal('it works!');
     });
   });
 });
