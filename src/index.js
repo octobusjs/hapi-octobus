@@ -13,7 +13,6 @@ export function register(server, options, next) {
 
   server.decorate('server', 'eventDispatcher', eventDispatcher);
   server.decorate('request', 'eventDispatcher', eventDispatcher);
-  server.decorate('reply', 'dispatch', internals.replies.dispatch);
   server.handler('dispatch', internals.handlers.dispatch);
 
   next();
@@ -35,10 +34,12 @@ internals.replies.dispatch = function dispatch(event, params = {}) {
 
 internals.handlers.dispatch = (route, options) => (request, reply) => {
   const event = options;
-
-  return reply.dispatch(event, {
+  const { eventDispatcher } = request;
+  const params = {
     ...request.params,
     ...request.query,
     ...request.payload,
-  });
+  };
+
+  return reply(eventDispatcher.dispatch(event, params));
 };
