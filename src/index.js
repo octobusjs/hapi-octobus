@@ -7,7 +7,7 @@ const internals = {
 };
 
 export function register(server, options, next) {
-  const eventDispatcher = createEventDispatcher(options);
+  const eventDispatcher = options.eventDispatcher || createEventDispatcher(options);
 
   server.expose('eventDispatcher', eventDispatcher);
 
