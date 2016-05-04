@@ -33,13 +33,21 @@ internals.replies.dispatch = function dispatch(event, params = {}) {
 };
 
 internals.handlers.dispatch = (route, options) => (request, reply) => {
-  const event = options;
+  let event;
+  let params;
   const { eventDispatcher } = request;
-  const params = {
-    ...request.params,
-    ...request.query,
-    ...request.payload,
-  };
+
+  if (typeof options === 'string') {
+    event = options;
+    params = {
+      ...request.params,
+      ...request.query,
+      ...request.payload,
+    };
+  } else {
+    event = options.event;
+    params = options.buildParams(request);
+  }
 
   return reply(eventDispatcher.dispatch(event, params));
 };
