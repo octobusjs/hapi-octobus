@@ -28,7 +28,9 @@ internals.replies.dispatch = function dispatch(event, params = {}) {
   const { request, response } = this;
   const { eventDispatcher } = request;
 
-  response(eventDispatcher.dispatch(event, params));
+  eventDispatcher.dispatch(event, params)
+    .then((result) => response(result))
+    .catch((err) => response(err));
 };
 
 internals.handlers.dispatch = (route, options) => (request, reply) => {
