@@ -15,6 +15,8 @@ export function register(server, options, next) {
   server.decorate('request', 'eventDispatcher', eventDispatcher);
   server.handler('dispatch', internals.handlers.dispatch);
 
+  server.method('dispatch', (event, params = {}) => eventDispatcher.dispatch(event, params));
+
   next();
 }
 
