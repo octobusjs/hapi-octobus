@@ -12,7 +12,9 @@ export function register(server, options, next) {
   server.expose('eventDispatcher', eventDispatcher);
 
   server.decorate('server', 'eventDispatcher', eventDispatcher);
+
   server.decorate('request', 'eventDispatcher', eventDispatcher);
+
   server.handler('dispatch', internals.handlers.dispatch);
 
   server.method('dispatch', (event, params = {}) => eventDispatcher.dispatch(event, params));
@@ -29,9 +31,9 @@ internals.replies.dispatch = function dispatch(event, params = {}) {
   const { request, response } = this;
   const { eventDispatcher } = request;
 
-  eventDispatcher.dispatch(event, params)
-    .then((result) => response(result))
-    .catch((err) => response(err));
+  return eventDispatcher.dispatch(event, params)
+    .then(response)
+    .catch(response);
 };
 
 internals.handlers.dispatch = (route, options) => (request, reply) => {
