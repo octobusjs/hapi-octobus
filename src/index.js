@@ -1,4 +1,4 @@
-import { createEventDispatcher } from 'octobus.js';
+import Octobus from 'octobus.js';
 import pkg from '../package.json';
 
 const internals = {
@@ -7,7 +7,7 @@ const internals = {
 };
 
 export function register(server, options, next) {
-  const eventDispatcher = options.eventDispatcher || createEventDispatcher(options);
+  const eventDispatcher = options.eventDispatcher || new Octobus(options);
 
   server.expose('eventDispatcher', eventDispatcher);
 

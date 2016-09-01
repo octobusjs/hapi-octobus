@@ -2,7 +2,7 @@ import { Server } from 'hapi';
 import { expect } from 'chai';
 // import sinon from 'sinon';
 import * as HapiOctobus from '../src';
-import { createEventDispatcher } from 'octobus.js';
+import Octobus from 'octobus.js';
 
 describe('register()', () => {
   let server;
@@ -33,7 +33,7 @@ describe('register()', () => {
   });
 
   it('can use an existing eventDispatcher instance', (done) => {
-    const eventDispatcher = createEventDispatcher();
+    const eventDispatcher = new Octobus();
 
     server = new Server();
     server.connection();
