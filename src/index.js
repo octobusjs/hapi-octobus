@@ -6,7 +6,7 @@ const internals = {
   replies: {},
 };
 
-export function register(server, options, next) {
+export function register(server, options, next) { // eslint-disable-line
   const eventDispatcher = options.eventDispatcher || new Octobus(options);
 
   server.expose('eventDispatcher', eventDispatcher);

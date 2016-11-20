@@ -1,8 +1,8 @@
-import { Server } from 'hapi';
-import { expect } from 'chai';
+import { Server } from 'hapi'; // eslint-disable-line
+import { expect } from 'chai'; // eslint-disable-line
+import Octobus from 'octobus.js';
 // import sinon from 'sinon';
 import * as HapiOctobus from '../src';
-import Octobus from 'octobus.js';
 
 describe('register()', () => {
   let server;
