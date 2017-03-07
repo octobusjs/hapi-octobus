@@ -1,5 +1,7 @@
-import Octobus from 'octobus.js';
+import Joi from 'joi';
+import { ServiceBus, Message } from 'octobus.js';
 import pkg from '../package.json';
+import pluginOptionsSchema from './schemas/pluginOptions';
 
 const internals = {
   handlers: {},
@@ -7,17 +9,18 @@ const internals = {
 };
 
 export function register(server, options, next) { // eslint-disable-line
-  const eventDispatcher = options.eventDispatcher || new Octobus(options);
+  const pluginOptions = Joi.attempt(options, pluginOptionsSchema);
+  const serviceBus = pluginOptions.serviceBus || new ServiceBus(pluginOptions.transport);
 
-  server.expose('eventDispatcher', eventDispatcher);
+  server.expose('serviceBus', serviceBus);
 
-  server.decorate('server', 'eventDispatcher', eventDispatcher);
+  server.decorate('server', 'serviceBus', serviceBus);
 
-  server.decorate('request', 'eventDispatcher', eventDispatcher);
+  server.decorate('request', 'serviceBus', serviceBus);
 
-  server.handler('dispatch', internals.handlers.dispatch);
+  server.handler('send', internals.handlers.send);
 
-  server.method('dispatch', (event, params = {}) => eventDispatcher.dispatch(event, params));
+  server.method('send', (topic, data = {}) => serviceBus.send(topic, data));
 
   next();
 }
@@ -27,31 +30,31 @@ register.attributes = {
   dependencies: [],
 };
 
-internals.replies.dispatch = function dispatch(event, params = {}) {
+internals.replies.send = function send(topic, data = {}) {
   const { request, response } = this;
-  const { eventDispatcher } = request;
+  const { serviceBus } = request;
 
-  return eventDispatcher.dispatch(event, params)
+  return serviceBus.send(new Message({ topic, data }))
     .then(response)
     .catch(response);
 };
 
-internals.handlers.dispatch = (route, options) => (request, reply) => {
-  let event;
-  let params;
-  const { eventDispatcher } = request;
+internals.handlers.send = (route, options) => (request, reply) => {
+  let topic;
+  let data;
+  const { serviceBus } = request;
 
   if (typeof options === 'string') {
-    event = options;
-    params = {
+    topic = options;
+    data = {
       ...request.params,
       ...request.query,
       ...request.payload,
     };
   } else {
-    event = options.event;
-    params = options.buildParams(request);
+    topic = options.topic;
+    data = options.getData(request);
   }
 
-  return reply(eventDispatcher.dispatch(event, params));
+  return reply(serviceBus.send(new Message({ topic, data })));
 };

@@ -1,74 +1,83 @@
 import { Server } from 'hapi'; // eslint-disable-line
 import { expect } from 'chai'; // eslint-disable-line
-import Octobus from 'octobus.js';
+import { Plugin, Message, ServiceBus } from 'octobus.js';
 // import sinon from 'sinon';
 import * as HapiOctobus from '../src';
 
 describe('register()', () => {
+  let plugin;
   let server;
 
   beforeEach((done) => {
+    plugin = new Plugin();
     server = new Server();
     server.connection();
     server.register({
       register: HapiOctobus.register,
     }, (err) => {
       if (!err) {
-        const { eventDispatcher } = server.plugins['hapi-octobus'];
-        eventDispatcher.subscribe('test', () => 'it works');
+        const { serviceBus } = server.plugins['hapi-octobus'];
+        plugin.connect(serviceBus);
+        plugin.subscribe('test', () => 'it works');
       }
       done(err);
     });
   });
 
-  it('exposes an eventDispatcher instance', () => {
-    const { eventDispatcher } = server.plugins['hapi-octobus'];
-    expect(eventDispatcher).to.exist();
-    expect(server.eventDispatcher).to.exist();
-    expect(server.eventDispatcher).to.equal(eventDispatcher);
+  it('exposes a serviceBus', () => {
+    const { serviceBus } = server.plugins['hapi-octobus'];
+    expect(serviceBus).to.exist();
+    expect(server.serviceBus).to.exist();
+    expect(server.serviceBus).to.equal(serviceBus);
 
-    return eventDispatcher.dispatch('test').then((result) => {
+    return plugin.send('test').then((result) => {
       expect(result).to.equal('it works');
     });
   });
 
-  it('can use an existing eventDispatcher instance', (done) => {
-    const eventDispatcher = new Octobus();
+  it('accepts a ServiceBus instance as options', (done) => {
+    const serviceBus = new ServiceBus();
 
     server = new Server();
     server.connection();
     server.register({
       register: HapiOctobus.register,
       options: {
-        eventDispatcher,
+        serviceBus,
       },
     }, (err) => {
       expect(err).to.be.empty();
 
-      eventDispatcher.subscribe('test', () => 'it works');
+      serviceBus.onMessage((msg) => {
+        if (msg.topic === 'test') {
+          serviceBus.reply({
+            id: msg.id,
+            result: 'it works',
+          });
+        }
+      });
 
-      eventDispatcher.dispatch('test').then((result) => {
+      serviceBus.send(new Message({ topic: 'test' })).then((result) => {
         expect(result).to.equal('it works');
         done();
       });
     });
   });
 
-  it('exposes dispatch as a server method', () => {
-    const { eventDispatcher } = server.plugins['hapi-octobus'];
-    expect(server.methods.dispatch).to.be.a('function');
-    return eventDispatcher.dispatch('test').then((result) => {
+  it('exposes serviceBus.end as a server method', () => {
+    expect(server.methods.send).to.be.a('function');
+    return server.methods.send(new Message({ topic: 'test' })).then((result) => {
       expect(result).to.equal('it works');
     });
   });
 
-  it('attaches the eventDispatcher to each request', (done) => {
+  it('attaches the serviceBus instance to each request', (done) => {
     server.route({
       method: 'GET',
       path: '/',
       handler(request) {
-        expect(request.eventDispatcher).to.exist();
-        expect(server.eventDispatcher).to.equal(server.plugins['hapi-octobus'].eventDispatcher);
+        expect(request.serviceBus).to.exist();
+        expect(server.serviceBus).to.equal(server.plugins['hapi-octobus'].serviceBus);
         done();
       },
     });
@@ -76,12 +85,12 @@ describe('register()', () => {
     server.inject('/', () => {});
   });
 
-  it('has a dispatch handler', (done) => {
+  it('has a send handler', (done) => {
     server.route({
       method: 'GET',
       path: '/',
       handler: {
-        dispatch: 'test',
+        send: 'test',
       },
     });
 
@@ -92,15 +101,14 @@ describe('register()', () => {
     });
   });
 
-  it('the dispatch handler gets access to the query parameters', (done) => {
-    const { eventDispatcher } = server.plugins['hapi-octobus'];
-    eventDispatcher.subscribe('say.hello', ({ params }) => `Hello, ${params.name}!`);
+  it('the send handler gets access to the query parameters', (done) => {
+    plugin.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
 
     server.route({
       method: 'GET',
       path: '/',
       handler: {
-        dispatch: 'say.hello',
+        send: 'say.hello',
       },
     });
 
@@ -111,17 +119,16 @@ describe('register()', () => {
     });
   });
 
-  it('the dispatch handler can have a custom parameter parser', (done) => {
-    const { eventDispatcher } = server.plugins['hapi-octobus'];
-    eventDispatcher.subscribe('say.hello', ({ params }) => `Hello, ${params.name}!`);
+  it('the send handler can have a custom parameter parser', (done) => {
+    plugin.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
 
     server.route({
       method: 'POST',
       path: '/',
       handler: {
-        dispatch: {
-          event: 'say.hello',
-          buildParams({ query, payload }) {
+        send: {
+          topic: 'say.hello',
+          getData({ query, payload }) {
             return {
               name: `${query.firstName} ${payload.lastName.toUpperCase()}`,
             };
