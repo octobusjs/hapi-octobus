@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { ServiceBus, Message } from 'octobus.js';
+import { MessageBus, Message } from 'octobus.js';
 import pkg from '../package.json';
 import pluginOptionsSchema from './schemas/pluginOptions';
 
@@ -10,17 +10,17 @@ const internals = {
 
 export function register(server, options, next) { // eslint-disable-line
   const pluginOptions = Joi.attempt(options, pluginOptionsSchema);
-  const serviceBus = pluginOptions.serviceBus || new ServiceBus(pluginOptions.transport);
+  const messageBus = pluginOptions.messageBus || new MessageBus(pluginOptions.transport);
 
-  server.expose('serviceBus', serviceBus);
+  server.expose('messageBus', messageBus);
 
-  server.decorate('server', 'serviceBus', serviceBus);
+  server.decorate('server', 'messageBus', messageBus);
 
-  server.decorate('request', 'serviceBus', serviceBus);
+  server.decorate('request', 'messageBus', messageBus);
 
   server.handler('send', internals.handlers.send);
 
-  server.method('send', (topic, data = {}) => serviceBus.send(topic, data));
+  server.method('send', (topic, data = {}) => messageBus.send(topic, data));
 
   next();
 }
@@ -32,9 +32,9 @@ register.attributes = {
 
 internals.replies.send = function send(topic, data = {}) {
   const { request, response } = this;
-  const { serviceBus } = request;
+  const { messageBus } = request;
 
-  return serviceBus.send(new Message({ topic, data }))
+  return messageBus.send(new Message({ topic, data }))
     .then(response)
     .catch(response);
 };
@@ -42,7 +42,7 @@ internals.replies.send = function send(topic, data = {}) {
 internals.handlers.send = (route, options) => (request, reply) => {
   let topic;
   let data;
-  const { serviceBus } = request;
+  const { messageBus } = request;
 
   if (typeof options === 'string') {
     topic = options;
@@ -56,5 +56,5 @@ internals.handlers.send = (route, options) => (request, reply) => {
     data = options.getData(request);
   }
 
-  return reply(serviceBus.send(new Message({ topic, data })));
+  return reply(messageBus.send(new Message({ topic, data })));
 };

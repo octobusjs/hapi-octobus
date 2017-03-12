@@ -35,7 +35,7 @@
   "dependencies": {
     "joi": "^10.0.1",
     "lodash": "^4.17.2",
-    "octobus.js": "0.23.0"
+    "octobus.js": "0.24.0"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
