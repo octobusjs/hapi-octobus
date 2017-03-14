@@ -1,6 +1,6 @@
 {
   "name": "hapi-octobus",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A hapi plugin that integrates octobus.js",
   "main": "dist/index.js",
   "scripts": {
