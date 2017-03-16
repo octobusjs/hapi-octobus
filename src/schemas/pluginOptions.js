@@ -1,7 +1,7 @@
 import Joi from 'joi';
-import { Transport, MessageBus } from 'octobus.js';
+import { Transport } from 'octobus.js';
 
 export default {
-  messageBus: Joi.object().type(MessageBus),
-  transport: Joi.object().type(Transport).default(new Transport()),
+  messageBus: Joi.object(),
+  transport: Joi.object().default(new Transport()),
 };
