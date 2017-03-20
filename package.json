@@ -1,6 +1,6 @@
 {
   "name": "hapi-octobus",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "A hapi plugin that integrates octobus.js",
   "main": "dist/index.js",
   "scripts": {
@@ -35,7 +35,7 @@
   "dependencies": {
     "joi": "^10.0.1",
     "lodash": "^4.17.2",
-    "octobus.js": "0.26.1"
+    "octobus.js": "0.27.0"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
