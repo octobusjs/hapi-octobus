@@ -50,10 +50,12 @@ describe('register()', () => {
 
       messageBus.onMessage((msg) => {
         if (msg.topic === 'test') {
-          messageBus.reply({
-            id: msg.id,
-            result: 'it works',
-          });
+          messageBus.reply(
+            new Message({
+              ...msg,
+              result: 'it works',
+            }),
+          );
         }
       });
 

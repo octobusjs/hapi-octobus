@@ -10,7 +10,7 @@ const internals = {
 
 export function register(server, options, next) { // eslint-disable-line
   const pluginOptions = Joi.attempt(options, pluginOptionsSchema);
-  const messageBus = pluginOptions.messageBus || new MessageBus(pluginOptions.transport);
+  const messageBus = pluginOptions.messageBus || new MessageBus();
 
   server.expose('messageBus', messageBus);
 
